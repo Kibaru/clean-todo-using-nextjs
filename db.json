@@ -1,0 +1,21 @@
+{
+  "todos": [
+    {
+      "id": "e70dfb49-225a-43ca-b3a0-8d8a3039f170",
+      "title": "Test1245",
+      "completed": true,
+      "createdAt": "2026-02-21T14:28:04.805Z"
+    },
+    {
+      "id": "b16c26be-7deb-472f-8c03-9ccac61a6a53",
+      "title": "test2345",
+      "completed": false,
+      "createdAt": "2026-02-21T14:46:54.375Z"
+    },
+    {
+      "id": "c8a5833f-60bf-4a3f-a828-9b2880efe79d",
+      "title": "657890",
+      "createdAt": "2026-02-21T17:04:00.384Z"
+    }
+  ]
+}

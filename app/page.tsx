@@ -1,65 +1,229 @@
-import Image from "next/image";
+"use client"
+
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+
+import {
+  createTodoSchema,
+  CreateTodoInput,
+} from "@/src/presentation/schemas/todo"
+
+import {
+  useTodos,
+  useCreateTodo,
+  useUpdateTodo,
+  useDeleteTodo,
+} from "@/lib/hooks/useTodos"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form"
 
 export default function Home() {
+  const { data: todos, isLoading, isError } = useTodos()
+  const createMutation = useCreateTodo()
+  const updateMutation = useUpdateTodo()
+  const deleteMutation = useDeleteTodo()
+
+  const [editingId, setEditingId] = useState<string | null>(null)
+
+  // Create form
+  const createForm = useForm<CreateTodoInput>({
+    resolver: zodResolver(createTodoSchema),
+    defaultValues: { title: "" },
+  })
+
+  // Edit form (separate form instance!)
+  const editForm = useForm<CreateTodoInput>({
+    resolver: zodResolver(createTodoSchema),
+    defaultValues: { title: "" },
+  })
+
+  function onCreate(values: CreateTodoInput) {
+    createMutation.mutate(values.title)
+    createForm.reset()
+  }
+
+  function onEdit(values: CreateTodoInput) {
+    if (!editingId) return
+
+    updateMutation.mutate(
+      {
+        id: editingId,
+        data: { title: values.title },
+      },
+      {
+        onSuccess: () => {
+          setEditingId(null)
+          editForm.reset()
+        },
+      }
+    )
+  }
+
+  function startEditing(id: string, currentTitle: string) {
+    setEditingId(id)
+    editForm.reset({ title: currentTitle })
+  }
+
+  if (isLoading) return <p className="p-8">Loading...</p>
+  if (isError) return <p className="p-8 text-red-500">Error loading todos</p>
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-muted p-8 flex justify-center">
+      <div className="w-full max-w-xl space-y-6">
+        <h1 className="text-3xl font-bold text-center">
+          Clean Architecture Todo
+        </h1>
+
+        {/* CREATE */}
+        <Card>
+          <CardContent className="p-4">
+            <Form {...createForm}>
+              <form
+                onSubmit={createForm.handleSubmit(onCreate)}
+                className="flex gap-2 items-start"
+              >
+                <FormField
+                  control={createForm.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input placeholder="Enter todo..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                >
+                  {createMutation.isPending ? "Adding..." : "Add"}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        {/* LIST */}
+        <div className="space-y-3">
+          {todos?.map(todo => (
+            <Card key={todo.id}>
+              <CardContent className="p-4 space-y-2">
+
+                <div className="flex items-center justify-between gap-3">
+
+                  <div className="flex items-center gap-3 w-full">
+                    <Checkbox
+                      checked={todo.completed}
+                      onCheckedChange={(checked) =>
+                        updateMutation.mutate({
+                          id: todo.id,
+                          data: { completed: !!checked },
+                        })
+                      }
+                    />
+
+                    {editingId === todo.id ? (
+                      <Form {...editForm}>
+                        <form
+                          onSubmit={editForm.handleSubmit(onEdit)}
+                          className="flex-1"
+                        >
+                          <FormField
+                            control={editForm.control}
+                            name="title"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </form>
+                      </Form>
+                    ) : (
+                      <span
+                        className={`flex-1 ${
+                          todo.completed
+                            ? "line-through text-muted-foreground"
+                            : ""
+                        }`}
+                      >
+                        {todo.title}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    {editingId === todo.id ? (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={editForm.handleSubmit(onEdit)}
+                          disabled={updateMutation.isPending}
+                        >
+                          {updateMutation.isPending
+                            ? "Saving..."
+                            : "Save"}
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            setEditingId(null)
+                            editForm.reset()
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() =>
+                            startEditing(todo.id, todo.title)
+                          }
+                        >
+                          Edit
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() =>
+                            deleteMutation.mutate(todo.id)
+                          }
+                        >
+                          Delete
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+              </CardContent>
+            </Card>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+      </div>
+    </main>
+  )
 }
