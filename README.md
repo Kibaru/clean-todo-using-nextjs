@@ -2,7 +2,7 @@
 
 ## A Todo Project That’s Actually Architected Properly
 
-![Clean Architecture for Frontends](/clean-architecture-for-frontends.png)
+![Clean Architecture for Frontends](/public/clean-architecture-for-frontends.png)
 
 This repository demonstrates how to implement **Clean Architecture in a Next.js application** using a properly structured Todo project.
 
