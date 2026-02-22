@@ -14,7 +14,7 @@ import {
   useCreateTodo,
   useUpdateTodo,
   useDeleteTodo,
-} from "@/lib/hooks/useTodos"
+} from "@/src/presentation/hooks/useTodos"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

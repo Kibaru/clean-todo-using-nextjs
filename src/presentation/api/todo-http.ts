@@ -1,4 +1,4 @@
-import { apiFetch } from "./client"
+import { apiFetch } from "./app-client"
 
 export interface Todo {
   id: string

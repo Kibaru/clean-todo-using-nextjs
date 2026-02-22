@@ -5,7 +5,7 @@ import {
   updateTodo,
   deleteTodo,
   Todo,
-} from "@/lib/api/todos"
+} from "@/src/presentation/api/todo-http"
 
 export function useTodos() {
   return useQuery({
